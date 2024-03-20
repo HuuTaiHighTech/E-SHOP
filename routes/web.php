@@ -16,7 +16,8 @@
     use App\Http\Controllers\NotificationController;
     use App\Http\Controllers\HomeController;
     use \UniSharp\LaravelFilemanager\Lfm;
-
+    use Illuminate\Foundation\Auth\EmailVerificationRequest;
+    use Illuminate\Http\Request;
     /*
     |--------------------------------------------------------------------------
     | Web Routes
@@ -49,7 +50,36 @@
     Route::get('user/register', [FrontendController::class, 'register'])->name('register.form');
     Route::post('user/register', [FrontendController::class, 'registerSubmit'])->name('register.submit');
 // Reset password
-    Route::post('password-reset', [FrontendController::class, 'showResetForm'])->name('password.reset');
+Route::get('password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('password.request');
+
+// Route này nhận yêu cầu POST từ form được gửi qua 'password.request'
+Route::post('password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('password.email');
+
+// Route này hiển thị form đặt lại mật khẩu mà người dùng nhập mật khẩu mới và token
+Route::get('password/reset/{token}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset');
+
+// Route này nhận yêu cầu POST từ form đặt lại mật khẩu
+Route::post('password/reset', 'Auth\ResetPasswordController@reset')->name('password.update');
+
+
+
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+
+    return redirect('/home');
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+
+Route::post('/email/verification-notification', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+
+    return back()->with('message', 'Verification link sent!');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
 // Socialite
     Route::get('login/{provider}/', [LoginController::class, 'redirect'])->name('login.redirect');
     Route::get('login/{provider}/callback/', [LoginController::class, 'Callback'])->name('login.callback');

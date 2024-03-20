@@ -10,16 +10,36 @@ use App\Models\Post;
 use App\Models\Cart;
 use App\Models\Brand;
 use App\User;
-use Auth;
+
 use Session;
 use Newsletter;
 use DB;
-use Hash;
+
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Events\Validated;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+
+use App\Http\Controllers\Controller;
+
+use App\Providers\RouteServiceProvider;
+
+use Illuminate\Http\RedirectResponse;
+
+
+
+use Illuminate\Foundation\Auth\RegistersUsers;
+
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+
+
+
+use Illuminate\Validation\Rules;
+use Illuminate\View\View;
 class FrontendController extends Controller
 {
-   
+
     public function index(Request $request){
         return redirect()->route($request->user()->role);
     }
@@ -38,7 +58,7 @@ class FrontendController extends Controller
                 ->with('banners',$banners)
                 ->with('product_lists',$products)
                 ->with('category_lists',$category);
-    }   
+    }
 
     public function aboutUs(){
         return view('frontend.pages.about-us');
@@ -56,7 +76,7 @@ class FrontendController extends Controller
 
     public function productGrids(){
         $products=Product::query();
-        
+
         if(!empty($_GET['category'])){
             $slug=explode(',',$_GET['category']);
             // dd($slug);
@@ -85,7 +105,7 @@ class FrontendController extends Controller
             // return $price;
             // if(isset($price[0]) && is_numeric($price[0])) $price[0]=floor(Helper::base_amount($price[0]));
             // if(isset($price[1]) && is_numeric($price[1])) $price[1]=ceil(Helper::base_amount($price[1]));
-            
+
             $products->whereBetween('price',$price);
         }
 
@@ -99,12 +119,12 @@ class FrontendController extends Controller
         }
         // Sort by name , price, category
 
-      
+
         return view('frontend.pages.product-grids')->with('products',$products)->with('recent_products',$recent_products);
     }
     public function productLists(){
         $products=Product::query();
-        
+
         if(!empty($_GET['category'])){
             $slug=explode(',',$_GET['category']);
             // dd($slug);
@@ -133,7 +153,7 @@ class FrontendController extends Controller
             // return $price;
             // if(isset($price[0]) && is_numeric($price[0])) $price[0]=floor(Helper::base_amount($price[0]));
             // if(isset($price[1]) && is_numeric($price[1])) $price[1]=ceil(Helper::base_amount($price[1]));
-            
+
             $products->whereBetween('price',$price);
         }
 
@@ -147,7 +167,7 @@ class FrontendController extends Controller
         }
         // Sort by name , price, category
 
-      
+
         return view('frontend.pages.product-lists')->with('products',$products)->with('recent_products',$recent_products);
     }
     public function productFilter(Request $request){
@@ -251,7 +271,7 @@ class FrontendController extends Controller
 
     public function blog(){
         $post=Post::query();
-        
+
         if(!empty($_GET['category'])){
             $slug=explode(',',$_GET['category']);
             // dd($slug);
@@ -372,26 +392,27 @@ class FrontendController extends Controller
     public function register(){
         return view('frontend.pages.register');
     }
-    public function registerSubmit(Request $request){
-        // return $request->all();
-        $this->validate($request,[
-            'name'=>'string|required|min:2',
-            'email'=>'string|required|unique:users,email',
-            'password'=>'required|min:6|confirmed',
+    public function registerSubmit(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
         ]);
-        $data=$request->all();
-        // dd($data);
-        $check=$this->create($data);
-        Session::put('user',$data['email']);
-        if($check){
-            request()->session()->flash('success','Successfully registered');
-            return redirect()->route('home');
-        }
-        else{
-            request()->session()->flash('error','Please try again!');
-            return back();
-        }
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => strtolower($request->email), // Ensure the email is stored in lowercase
+            'password' => Hash::make($request->password),
+        ]);
+
+        event(new Registered($user));
+
+        Auth::login($user);
+
+        return redirect(RouteServiceProvider::HOME);
     }
+
     public function create(array $data){
         return User::create([
             'name'=>$data['name'],
@@ -422,5 +443,5 @@ class FrontendController extends Controller
                 return back();
             }
     }
-    
+
 }
