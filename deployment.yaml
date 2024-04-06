@@ -1,21 +1,113 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: myapp-deployment
+  name: laravel-web-deployment
+  labels:
+    app: laravel-app
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
-      app: myapp
+      app: laravel-app
   template:
     metadata:
       labels:
-        app: myapp
+        app: laravel-app
     spec:
       containers:
-      - name: myapp-container
-        image: myapp:v1
+      - name: laravel-app-container
+        image: web-e-shop-68d466dc48-ljjfk
         ports:
         - containerPort: 80
-      imagePullSecrets:
-      - name: myregistrykey
+        env:
+          - name: APP_NAME
+            value: "E-SHOP"
+          - name: APP_ENV
+            value: "local"
+          - name: APP_KEY
+            valueFrom:
+              secretKeyRef:
+                name: laravel-secret
+                key: APP_KEY
+          - name: APP_DEBUG
+            value: "true"
+          - name: LOG_CHANNEL
+            value: "stack"
+          - name: DB_CONNECTION
+            value: "mysql"
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                name: laravel-secret
+                key: DB_HOST
+          - name: DB_PORT
+            value: "3306"
+          - name: DB_DATABASE
+            value: "test-etech"
+          - name: DB_USERNAME
+            value: "root"
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: laravel-secret
+                key: DB_PASSWORD
+          - name: BROADCAST_DRIVER
+            value: "log"
+          - name: CACHE_DRIVER
+            value: "file"
+          - name: QUEUE_CONNECTION
+            value: "sync"
+          - name: SESSION_DRIVER
+            value: "file"
+          - name: SESSION_LIFETIME
+            value: "120"
+          - name: REDIS_HOST
+            valueFrom:
+              secretKeyRef:
+                name: laravel-secret
+                key: REDIS_HOST
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: laravel-secret
+                key: REDIS_PASSWORD
+          - name: REDIS_PORT
+            value: "6379"
+          - name: MAIL_MAILER
+            value: "smtp"
+          - name: MAIL_HOST
+            value: "smtp.mailtrap.io"
+          - name: MAIL_PORT
+            value: "2525"
+          - name: MAIL_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: laravel-secret
+                key: MAIL_USERNAME
+          - name: MAIL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: laravel-secret
+                key: MAIL_PASSWORD
+          - name: MAIL_ENCRYPTION
+            value: "tls"
+          - name: MAIL_FROM_ADDRESS
+            value: "from@example.com"
+          - name: MAIL_FROM_NAME
+            value: "E-SHOP"
+          # Định nghĩa thêm các biến môi trường và secrets theo cần thiết
+          # ...
+        volumeMounts:
+          # Cấu hình volumeMounts để lưu trữ persistent data nếu cần
+          - name: storage-volume
+            mountPath: /var/www/html/storage
+          - name: cache-volume
+            mountPath: /var/www/html/bootstrap/cache
+      volumes:
+        # Cấu hình volumes để lưu trữ persistent data
+        - name: storage-volume
+          persistentVolumeClaim:
+            claimName: storage-pvc
+        - name: cache-volume
+          persistentVolumeClaim:
+            claimName: cache-pvc

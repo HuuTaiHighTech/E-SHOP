@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: storage-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce  # Pod có thể đọc viết trên một Node
+  resources:
+    requests:
+      storage: 10Gi  # Yêu cầu 10 GiB dung lượng
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cache-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce  # Pod có thể đọc viết trên một Node
+  resources:
+    requests:
+      storage: 5Gi  # Yêu cầu 5 GiB dung lượng
