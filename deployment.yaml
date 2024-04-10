@@ -15,24 +15,22 @@ spec:
         app: laravel-app
     spec:
       containers:
-      - name: laravel-app-container
-        image: web-e-shop-68d466dc48-ljjfk
+      - name: ten-du-an-laravel-cua-bancontainer
+        image: ten-du-an-laravel-cua-ban # Sửa lại tag image cho phù hợp
         ports:
         - containerPort: 80
         env:
           - name: APP_NAME
             value: "E-SHOP"
           - name: APP_ENV
-            value: "local"
+            value: "production" # Đổi từ local sang production
           - name: APP_KEY
             valueFrom:
               secretKeyRef:
                 name: laravel-secret
                 key: APP_KEY
           - name: APP_DEBUG
-            value: "true"
-          - name: LOG_CHANNEL
-            value: "stack"
+            value: "false" # Không nên bật debug trong sản xuất
           - name: DB_CONNECTION
             value: "mysql"
           - name: DB_HOST
@@ -43,71 +41,24 @@ spec:
           - name: DB_PORT
             value: "3306"
           - name: DB_DATABASE
-            value: "test-etech"
+            value: "test-etech" # Sửa tên database cho phù hợp môi trường
           - name: DB_USERNAME
-            value: "root"
+            valueFrom:
+              secretKeyRef:
+                name: laravel-secret
+                key: DB_USERNAME
           - name: DB_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: laravel-secret
                 key: DB_PASSWORD
-          - name: BROADCAST_DRIVER
-            value: "log"
-          - name: CACHE_DRIVER
-            value: "file"
-          - name: QUEUE_CONNECTION
-            value: "sync"
-          - name: SESSION_DRIVER
-            value: "file"
-          - name: SESSION_LIFETIME
-            value: "120"
-          - name: REDIS_HOST
-            valueFrom:
-              secretKeyRef:
-                name: laravel-secret
-                key: REDIS_HOST
-          - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: laravel-secret
-                key: REDIS_PASSWORD
-          - name: REDIS_PORT
-            value: "6379"
-          - name: MAIL_MAILER
-            value: "smtp"
-          - name: MAIL_HOST
-            value: "smtp.mailtrap.io"
-          - name: MAIL_PORT
-            value: "2525"
-          - name: MAIL_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: laravel-secret
-                key: MAIL_USERNAME
-          - name: MAIL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: laravel-secret
-                key: MAIL_PASSWORD
-          - name: MAIL_ENCRYPTION
-            value: "tls"
-          - name: MAIL_FROM_ADDRESS
-            value: "from@example.com"
-          - name: MAIL_FROM_NAME
-            value: "E-SHOP"
-          # Định nghĩa thêm các biến môi trường và secrets theo cần thiết
-          # ...
+          # Bỏ đi các cấu hình liên quan đến REDIS, MAIL, etc. nếu không sử dụng
         volumeMounts:
-          # Cấu hình volumeMounts để lưu trữ persistent data nếu cần
+          # Cấu hình các volumeMounts theo cần thiết
           - name: storage-volume
             mountPath: /var/www/html/storage
-          - name: cache-volume
-            mountPath: /var/www/html/bootstrap/cache
       volumes:
-        # Cấu hình volumes để lưu trữ persistent data
+        # Cấu hình các volumes theo cần thiết
         - name: storage-volume
           persistentVolumeClaim:
             claimName: storage-pvc
-        - name: cache-volume
-          persistentVolumeClaim:
-            claimName: cache-pvc
